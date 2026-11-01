@@ -54,7 +54,7 @@ To select a different executable or arguments, customize these options from Erla
 - Navigate prompts with `M-x erleat-previous-shell-prompt` and
   `M-x erleat-next-shell-prompt`, or add custom key bindings to `erleat-mode-map`:
   
-  ```elisp
+```elisp
 (with-eval-after-load 'erleat
   (define-key erleat-mode-map (kbd "C-v") #'eat-yank)
   (define-key erleat-mode-map (kbd "C-c C-p") #'erleat-previous-shell-prompt)
