@@ -20,6 +20,45 @@ Erleat reuses options from Erlang shell mode, and aims to mimic its behavior.
 Erleat also provides [optional highlighting of printed output and returned
 values](#output-and-result-highlighting).
 
+## Experimental alternative: keep the original Comint shell
+
+[`erlang-comint-redraw.el`](erlang-comint-redraw.el) is a standalone filter for
+the duplicate prompt/input redraw seen with `rebar3 shell`. It uses the original
+`erlang-shell-mode`, preserving its commands and integration. It needs neither
+Eat nor Erleat; put this file on your `load-path`, then configure:
+
+```elisp
+(require 'erlang-comint-redraw)
+(add-hook 'erlang-shell-mode-hook #'erlang-comint-redraw-mode)
+```
+
+Start your usual Erlang shell with your existing `rebar3 shell` configuration.
+For a shell buffer already running, enable `M-x erlang-comint-redraw-mode`
+before submitting another expression. Keep `comint-process-echoes` enabled,
+as Erlang mode normally does.
+
+The filter discards cursor-up/erase/redraw sequences only when the redrawn text
+exactly matches the expression just submitted. Comint retains the original
+prompt and input, including their highlighting. Multiline expressions and
+sequences split across process output chunks are supported. Incomplete matches
+are bounded in size and time; unrecognized output is passed through unchanged.
+
+This targets submitted-expression redraws with Erlang's default shell formatter.
+It is not a general terminal emulator and does not handle arbitrary terminal
+editing or custom shell formatters. Test it with your setup before replacing
+Erleat. Verified with Emacs 30.1, Erlang/OTP 27.3.4.1 and rebar3 3.24.0, including
+upstream compilation, `r3` availability, and asynchronous output with unsent input.
+
+Run the filter's independent tests (no Eat needed) with:
+
+```sh
+emacs -Q --batch -L . -L /path/to/otp/lib/tools/emacs \
+  -l test/erlang-comint-redraw-tests.el -f ert-run-tests-batch-and-exit
+```
+
+The real-shell test requires `rebar3` on `PATH`, or its path in
+`ERLANG_COMINT_REDRAW_REBAR3`; otherwise that test is skipped.
+
 ## Setup
 
 You need Emacs 27.1 or later, Eat 0.9.4 or later, Erlang's Emacs mode, and an
