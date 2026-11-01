@@ -1,7 +1,7 @@
 # Erleat = Erlang + Eat
 
-An Erlang shell for Emacs, using [Eat](https://codeberg.org/akib/emacs-eat)
-instead of Emacs' Comint in order to avoid display problems with the latter.
+An Erlang inferior shell for Emacs, using the [Eat](https://codeberg.org/akib/emacs-eat) terminal emulator
+instead of Comint -- as is the case with the inferior shell that ships with [Erlang/OTP](https://github.com/erlang/otp) -- in order to avoid display problems experienced with Comint.
 
 Unless started with the `-oldshell` option, the Erlang shell edits and redraws its prompts using terminal control sequences.
 With Comint, those redraws can leave duplicated or incorrectly displayed prompts.
@@ -9,29 +9,22 @@ Unfortunately, using the `-oldshell` option with `rebar3 shell` as the shell wil
 Eat emulates a terminal, allowing Erlang to handle line editing, history, and
 completion while Eat renders the screen.
 
-Erleat is a small adapter around the existing Erlang mode. It reuses its executable,
-argument, and window settings without modifying Erlang mode.
-Prompts and submitted input are highlighted automatically; printed output and
-returned values can be highlighted separately with an optional minor mode.
+Erleat reuses options from Erlang shell mode, and aims to mimic its behavior.
+
+Erleat also adds support for highlighting the printed output and
+returned values from expressions.
+
+Erleat Mode is a minor mode instead of deriving from Eat Mode because Eat Mode runs some checks on the major mode in its buffers.
 
 ## Setup
 
 You need Emacs 27.1 or later, Eat 0.9.4 or later, Erlang's Emacs mode, and an
-installed Erlang/OTP runtime with `erl` on your `PATH`. A prebuilt runtime is
-sufficient. Install Erlang's Emacs mode separately and ensure `erlang.el` and
+installed Erlang/OTP runtime with `erl` on your `PATH`. Install Erlang's Emacs mode separately and ensure `erlang.el` and
 `erlang-start.el` are available on Emacs' `load-path`.
 
-1. Install Eat using your preferred package manager. For example:
+1. Install Eat.
 
-   ```elisp
-   (require 'package)
-   (add-to-list 'package-archives
-                '("nongnu" . "https://elpa.nongnu.org/nongnu/"))
-   ```
-
-   Then run `M-x package-refresh-contents` and `M-x package-install RET eat RET`.
-
-2. Download or clone the Erleat repository.
+2. Download or clone this repository.
 
 3. Add this to your Emacs initialization, adjusting the path:
 
@@ -43,18 +36,19 @@ sufficient. Install Erlang's Emacs mode separately and ensure `erlang.el` and
    (require 'erleat)
    ```
 
-4. Run **`M-x erleat`**. It starts or selects `*erlang-eat*`; an exited shell is
+4. Run **`M-x erleat`** to start the Erleat inferior shell.  `erleat` starts or selects `*erlang-eat*`; an exited shell is
    restarted when you invoke the command again.
 
-To select a different executable or arguments, customize `inferior-erlang-machine`
-and `inferior-erlang-machine-options`. `erlang-inferior-shell-split-window` controls
-whether the terminal opens in another window.
+To select a different executable or arguments, customize these options from Erlang mode:
+
+- `inferior-erlang-machine` and `inferior-erlang-machine-options`;
+- `erlang-inferior-shell-split-window` controls whether the terminal opens in another window.
 
 ## Everyday use and customization
 
 - Use Erlang's terminal editing, history recall, and Tab completion.
 - Navigate prompts with `M-x erleat-previous-shell-prompt` and
-  `M-x erleat-next-shell-prompt`. Both use `erleat-prompt-regexp` and accept a
+  `M-x erleat-next-shell-prompt`, or add custom key bindings to `erleat-mode-map`. Both use `erleat-prompt-regexp` and accept a
   numeric prefix to move across multiple prompts. Point lands at the end of the
   prompt, immediately before the user input.
 - Paste with **`C-y`** or **`M-x eat-yank`**. If needed, use `C-c C-j` to select
