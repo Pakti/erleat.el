@@ -1,6 +1,6 @@
 ;;; erleat-highlight.el --- Highlight Erlang Eat interactions -*- lexical-binding: t; -*-
 
-;; SPDX-License-Identifier: GPL-3.0-only
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
 

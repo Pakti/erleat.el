@@ -1,6 +1,6 @@
 ;;; erleat-load-all.el --- Development helper to reload Erleat sources -*- lexical-binding: t; -*-
 
-;; SPDX-License-Identifier: GPL-3.0-only
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
 

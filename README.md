@@ -166,5 +166,5 @@ integration tests interactively; the fixtures refuse to reuse it.
 
 ## License
 
-Erleat is licensed under the [GNU General Public License, version 3](LICENSE)
-(GPL-3.0-only).
+Erleat is licensed under the [GNU General Public License, version 3 or any later version](LICENSE)
+(GPL-3.0-or-later).

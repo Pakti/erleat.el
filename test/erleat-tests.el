@@ -1,6 +1,6 @@
 ;;; erleat-tests.el --- Prompt navigation and shell tests -*- lexical-binding: t; -*-
 
-;; SPDX-License-Identifier: GPL-3.0-only
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Code:
 

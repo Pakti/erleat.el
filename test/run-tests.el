@@ -1,6 +1,6 @@
 ;;; run-tests.el --- Batch entry point for Erleat tests -*- lexical-binding: t; -*-
 
-;; SPDX-License-Identifier: GPL-3.0-only
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
 ;; From the checkout root: emacs -Q --batch -l test/run-tests.el
