@@ -104,9 +104,16 @@ assign that same no-argument function to `erleat-font-lock-add-keywords-function
 (setq erleat-font-lock-add-keywords-function #'my-erlang-font-lock-setup)
 ```
 
-The function runs in the temporary result buffer after activating Erlang mode,
-before fontification. Its default is `nil`; ordinary source-buffer hooks are not run.
-Overlay-based highlighters are not copied. Customize the `erleat-prompt`,
+For efficiency, the renderer activates Erlang mode in a temporary buffer but
+suppresses `erlang-mode-hook` and `prog-mode-hook`. This avoids repeatedly starting
+source-buffer services such as Flymake for each result. Fontification is still
+performed with `font-lock-ensure`; suppressing those hooks does not disable it.
+
+Customize `erleat-font-lock-add-keywords-function` to install any additional
+font-lock rules you want for results. The optional no-argument function runs in
+the temporary buffer after activating Erlang mode and before fontification; its
+default is `nil`. Only text-property faces are copied back to the terminal, not
+overlay-based highlighting. Customize the `erleat-prompt`,
 `erleat-input`, `erleat-output`, and `erleat-result` faces independently.
 
 ## Scope and development
