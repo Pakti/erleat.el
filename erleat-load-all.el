@@ -1,10 +1,14 @@
-;;; erleat-load-all.el --- Reload the Erleat sources -*- lexical-binding: t; -*-
+;;; erleat-load-all.el --- Development helper to reload Erleat sources -*- lexical-binding: t; -*-
 
-;; SPDX-License-Identifier: Apache-2.0
+;; SPDX-License-Identifier: GPL-3.0-only
 
 ;;; Commentary:
 
-;; Use M-x load-file on this file whenever you want to reload local edits.
+;; This is a convenience library for Erleat development, not a user-facing
+;; entry point.  Users should load `erleat' with (require 'erleat), and
+;; should not load this library or add it to their initialization files.
+;;
+;; During development, use M-x load-file on this file to reload local edits.
 ;; Erleat libraries are loaded from their sibling .el sources, even if
 ;; already loaded or an older .elc file exists.  Erlang mode and Eat are
 ;; dependencies; this helper does not reload their libraries or start a shell.

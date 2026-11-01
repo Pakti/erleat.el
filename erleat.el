@@ -1,6 +1,6 @@
 ;;; erleat.el --- Run the Erlang shell in Eat -*- lexical-binding: t; -*-
 
-;; SPDX-License-Identifier: Apache-2.0
+;; SPDX-License-Identifier: GPL-3.0-only
 ;; Version: 0.1.0
 ;; Package-Requires: ((emacs "27.1") (eat "0.9.4"))
 

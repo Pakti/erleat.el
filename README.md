@@ -11,8 +11,8 @@ completion while Eat renders the screen.
 
 Erleat reuses options from Erlang shell mode, and aims to mimic its behavior.
 
-Erleat also adds support for highlighting the printed output and
-returned values from expressions.
+Erleat also provides [optional highlighting of printed output and returned
+values](#output-and-result-highlighting).
 
 Erleat Mode is a minor mode instead of deriving from Eat Mode because Eat Mode runs some checks on the major mode in its buffers.
 
@@ -65,7 +65,10 @@ To select a different executable or arguments, customize these options from Erla
   regardless of whether optional output/result highlighting is enabled.
 - Run `M-x erleat-version` to display the package version.
 
-To enable optional output/result highlighting for new shells:
+### Output and result highlighting
+
+Output/result highlighting is disabled by default. To enable it for Erleat
+shells, add this to your Emacs initialization:
 
 ```elisp
 (add-hook 'erleat-mode-hook
@@ -107,7 +110,14 @@ pretty printing may need adjustments. Customize `erleat-prompt-regexp` as needed
 
 The integration has been tested on Linux with Emacs 30.1, Eat 0.9.4, and OTP 27.
 
-After editing the package, use `M-x load-file` on
+For development only, after editing the package, use `M-x load-file` on
 [`erleat-load-all.el`](erleat-load-all.el). It reloads
 [`erleat-highlight.el`](erleat-highlight.el) and [`erleat.el`](erleat.el) from source,
 bypassing stale `.elc` files, without reloading Erlang mode or Eat.
+Users should load `(require 'erleat)` instead; the reload helper does not belong
+in normal user initialization.
+
+## License
+
+Erleat is licensed under the [GNU General Public License, version 3](LICENSE)
+(GPL-3.0-only).
