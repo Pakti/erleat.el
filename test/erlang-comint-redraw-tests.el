@@ -98,13 +98,15 @@
             (should-not erlang-comint-redraw--timer))
         (delete-process process)))))
 
-(ert-deftest erlang-comint-redraw-test-real-rebar3 ()
+(defun erlang-comint-redraw-test--real-rebar3 (&optional highlight)
+  "Exercise the real shell, optionally with HIGHLIGHT enabled."
+  (when highlight (require 'erlang-shell-highlight))
   (require 'erlang)
   (let* ((program (or (getenv "ERLANG_COMINT_REDRAW_REBAR3") (executable-find "rebar3")))
          (buffer (and program (generate-new-buffer " *erlang-redraw-test*")))
          (directory (and program (make-temp-file "erlang-redraw-test-" t)))
          process)
-    (skip-unless program)
+    (unless program (ert-skip "rebar3 is unavailable"))
     (unwind-protect
         (with-current-buffer buffer
           (let ((default-directory (file-name-as-directory directory))
@@ -116,6 +118,7 @@
             (erlang-shell-mode)
             (setq-local comint-process-echoes t)
             (erlang-comint-redraw-mode 1)
+            (when highlight (erlang-shell-highlight-mode 1))
             (let ((raw ""))
               (add-hook 'comint-preoutput-filter-functions
                         (lambda (s) (setq raw (concat raw s)) s) nil t)
@@ -124,9 +127,9 @@
                             (goto-char (point-max))
                             (insert s)
                             (comint-send-input)))
-		(send "io:format(\"PRINTED~n\"), {ok, 42}.")
+		(send "io:format(\"PRINTED~n\"), {ok, 42,\"text\"}.")
 		(erlang-comint-redraw-test--wait process "2> ")
-		(should (string-match-p "1> io:format(\"PRINTED~n\"), {ok, 42}\.\nPRINTED\n{ok,42}\n2> "
+		(should (string-match-p "1> io:format(\"PRINTED~n\"), {ok, 42,\"text\"}\.\nPRINTED\n{ok,42,\"text\"}\n2> "
 					(buffer-string)))
 		(save-excursion
                   (goto-char (point-min))
@@ -136,7 +139,22 @@
                   (should (memq 'comint-highlight-prompt
 				(ensure-list (get-text-property (- (point) 3)
 								'font-lock-face)))))
-		(send "1 +")
+		(when highlight
+                  (should (cl-some
+                           (lambda (o)
+                             (and (eq (overlay-get o 'face) 'erlang-shell-highlight-output)
+                                  (equal (buffer-substring-no-properties
+                                          (overlay-start o) (overlay-end o)) "PRINTED\n")))
+                           erlang-shell-highlight--overlays))
+                  (dolist (pair '((erlang-shell-highlight-result . "{ok,42,\"text\"}")
+                                  (font-lock-string-face . "\"text\"")))
+                    (should (cl-some
+                             (lambda (o)
+                               (and (eq (overlay-get o 'face) (car pair))
+                                    (equal (buffer-substring-no-properties
+                                            (overlay-start o) (overlay-end o)) (cdr pair))))
+                             erlang-shell-highlight--overlays))))
+                (send "1 +")
 		(erlang-comint-redraw-test--wait process "\\.\\. ")
 		(send "2.")
 		(erlang-comint-redraw-test--wait process "3> ")
@@ -183,5 +201,11 @@
       (when (process-live-p process) (delete-process process))
       (when (buffer-live-p buffer) (kill-buffer buffer))
       (delete-directory directory t))))
+
+(ert-deftest erlang-comint-redraw-test-real-rebar3 ()
+  (erlang-comint-redraw-test--real-rebar3))
+
+(ert-deftest erlang-comint-redraw-test-real-rebar3-with-highlighting ()
+  (erlang-comint-redraw-test--real-rebar3 t))
 
 ;;; erlang-comint-redraw-tests.el ends here

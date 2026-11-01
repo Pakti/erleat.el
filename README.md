@@ -1,182 +1,121 @@
-# Erleat = Erlang Shell + Eat for Emacs
+# Erlang shell extensions for Emacs
 
-Erleat is an inferior Erlang shell for Emacs, using the [Eat](https://codeberg.org/akib/emacs-eat) terminal emulator
-instead of Comint -- as is the case with the inferior shell that ships with [Erlang/OTP](https://github.com/erlang/otp) -- in order to avoid display problems experienced with Comint.
+A targeted redraw filter and optional output/result highlighting for the original
+Comint-based `erlang-shell-mode`. Both libraries leave Erlang mode's commands,
+key bindings, compilation, EUnit integration, and history handling in place.
 
-## Motivation
+## Why a filter?
 
-Unless started with the `-oldshell` option, the Erlang shell edits and redraws its prompts using terminal control sequences.
-With Comint, those redraws can leave duplicated or incorrectly displayed prompts.
-Unfortunately, using the `-oldshell` option with `rebar3 shell` as the shell will make `rebar3` crash.  Hence this package based on Eat.
-Eat emulates a terminal, allowing Erlang to handle line editing, history, and
-completion while Eat renders the screen.
+The modern Erlang shell redraws submitted expressions using terminal control
+sequences. In Comint, this can leave a second copy of the prompt and expression,
+particularly when running `rebar3 shell`.
 
-Erleat Mode is a minor mode instead of deriving from Eat Mode because Eat Mode runs some checks on the major mode in its buffers.
+[`erlang-comint-redraw.el`](erlang-comint-redraw.el) suppresses a redraw only when
+its text exactly matches the expression just submitted. Comint keeps the original
+prompt and input, including their highlighting. Multiline expressions and
+sequences split across process output chunks are supported.
 
-## Additions
+The filter is **Erlang-shell-specific**, not a general terminal emulator. It
+recognizes Erlang's numbered prompts, continuation prompts, and submitted-input
+redraws with the default shell formatter. Unknown output passes through unchanged;
+incomplete candidates are bounded in size and have an idle timeout. Custom shell
+formatters and arbitrary terminal editing are outside its scope.
 
-Erleat reuses options from Erlang shell mode, and aims to mimic its behavior.
+## Setup
 
-Erleat also provides [optional highlighting of printed output and returned
-values](#output-and-result-highlighting).
+You need Emacs 27.1 or later, Erlang's Emacs mode on `load-path`, and an installed
+Erlang/OTP runtime. Use your existing configuration for `erl` or `rebar3 shell`.
+No OTP source build or additional terminal package is needed.
 
-## Experimental alternative: keep the original Comint shell
-
-[`erlang-comint-redraw.el`](erlang-comint-redraw.el) is a standalone filter for
-the duplicate prompt/input redraw seen with `rebar3 shell`. It uses the original
-`erlang-shell-mode`, preserving its commands and integration. It needs neither
-Eat nor Erleat; put this file on your `load-path`, then configure:
+Put the libraries on `load-path`, then add:
 
 ```elisp
+(add-to-list 'load-path "/path/to/these-libraries")
+(require 'erlang-start)
 (require 'erlang-comint-redraw)
 (add-hook 'erlang-shell-mode-hook #'erlang-comint-redraw-mode)
 ```
 
-Start your usual Erlang shell with your existing `rebar3 shell` configuration.
-For a shell buffer already running, enable `M-x erlang-comint-redraw-mode`
-before submitting another expression. Keep `comint-process-echoes` enabled,
-as Erlang mode normally does.
+Start the original shell with `M-x erlang-shell`. For a buffer already running,
+enable `M-x erlang-comint-redraw-mode` before submitting another expression.
+Keep `comint-process-echoes` enabled, as Erlang mode normally does. For custom
+numbered prompts, customize `erlang-comint-redraw-prompt-regexp`.
 
-The filter discards cursor-up/erase/redraw sequences only when the redrawn text
-exactly matches the expression just submitted. Comint retains the original
-prompt and input, including their highlighting. Multiline expressions and
-sequences split across process output chunks are supported. Incomplete matches
-are bounded in size and time; unrecognized output is passed through unchanged.
+## Optional output and result highlighting
 
-This targets submitted-expression redraws with Erlang's default shell formatter.
-It is not a general terminal emulator and does not handle arbitrary terminal
-editing or custom shell formatters. Test it with your setup before replacing
-Erleat. Verified with Emacs 30.1, Erlang/OTP 27.3.4.1 and rebar3 3.24.0, including
-upstream compilation, `r3` availability, and asynchronous output with unsent input.
-
-Run the filter's independent tests (no Eat needed) with:
-
-```sh
-emacs -Q --batch -L . -L /path/to/otp/lib/tools/emacs \
-  -l test/erlang-comint-redraw-tests.el -f ert-run-tests-batch-and-exit
-```
-
-The real-shell test requires `rebar3` on `PATH`, or its path in
-`ERLANG_COMINT_REDRAW_REBAR3`; otherwise that test is skipped.
-
-## Setup
-
-You need Emacs 27.1 or later, Eat 0.9.4 or later, Erlang's Emacs mode, and an
-installed Erlang/OTP runtime with `erl` on your `PATH`. Install Erlang's Emacs mode separately and ensure `erlang.el` and
-`erlang-start.el` are available on Emacs' `load-path`.
-
-1. Install Eat.
-
-2. Download or clone this repository.
-
-3. Add this to your Emacs initialization, adjusting the path:
-
-   ```elisp
-   ;; If Erlang mode was installed manually, add its directory as well:
-   ;; (add-to-list 'load-path "/path/to/erlang-mode")
-   (add-to-list 'load-path "/path/to/erleat")
-   (require 'erlang-start)
-   (require 'erleat)
-   ```
-
-4. Run **`M-x erleat`** to start the Erleat inferior shell.  `erleat` starts or selects `*erlang-eat*`; an exited shell is
-   restarted when you invoke the command again.
-
-To select a different executable or arguments, customize these options from Erlang mode:
-
-- `inferior-erlang-machine` and `inferior-erlang-machine-options`;
-- `erlang-inferior-shell-split-window` controls whether the terminal opens in another window.
-
-## Everyday use and customization
-
-- Use Erlang's terminal editing, history recall, and Tab completion.
-- Navigate prompts with `M-x erleat-previous-shell-prompt` and
-  `M-x erleat-next-shell-prompt`, or add custom key bindings to `erleat-mode-map`:
-  
-```elisp
-(with-eval-after-load 'erleat
-  (define-key erleat-mode-map (kbd "C-v") #'eat-yank)
-  (define-key erleat-mode-map (kbd "C-c C-p") #'erleat-previous-shell-prompt)
-  (define-key erleat-mode-map (kbd "C-c C-n") #'erleat-next-shell-prompt))
-```
-  
-  `erleat-previous-shell-prompt` and `erleat-next-shell-prompt` use `erleat-prompt-regexp` and accept a
-  numeric prefix to move across multiple prompts.
-- Ordinary buffer-insertion commands such as
-  `clipboard-yank` can fail because the terminal text is read-only.
-  Paste with **`C-y`** or **`M-x eat-yank`**. If needed, use `C-c C-j` to select
-  Eat's semi-char input mode.
-- Use `erleat-mode-hook` to customize the Erleat buffer. `erleat` enables
-  `erleat-mode` on initialization and restart, but does not re-enable an already
-  active mode when selecting an existing shell. Like other minor-mode hooks,
-  this hook also runs when explicitly enabling or disabling the mode.
-  The major mode remains `eat-mode`; `erleat-buffer-p` identifies Erleat buffers.
-- `erleat-mode-map` bindings take precedence over Eat's input-mode maps; unbound keys retain
-  their usual behavior. RET submits input through Eat and records its boundary
-  regardless of whether optional output/result highlighting is enabled.
-- Run `M-x erleat-version` to display the package version.
-
-
-### Output and result highlighting
-
-The boolean option `erleat-extra-highlight` controls the highlighting of both
-expressions' output and result by enabling the `erleat-highlight-mode` minor mode along with `erleat-mode`.
-
-If you've customized Erlang font-locking with `font-lock-add-keywords` and would like the customization to apply
-to results in Erleat buffers, then you must extract the customization into a function to be set as the value of
-`erleat-font-lock-add-keywords-function`:
+[`erlang-shell-highlight.el`](erlang-shell-highlight.el) distinguishes printed
+output from returned values. It works with the redraw filter or the old Erlang
+shell, and is enabled independently:
 
 ```elisp
-(setq erleat-font-lock-add-keywords-function #'my-erlang-font-lock-setup)
+(require 'erlang-shell-highlight)
+(add-hook 'erlang-shell-mode-hook #'erlang-shell-highlight-mode)
 ```
 
+You can also toggle `M-x erlang-shell-highlight-mode` in an existing shell.
+Disabling it removes its overlays; prompt and input highlighting remain managed
+by Erlang mode and Comint. RET keeps its original behavior, including compiler
+error navigation. Commands that submit through `comint-send-input`, including
+upstream compilation commands, are tracked without replacing their implementation.
 
-## Faces
+For example:
 
-Customize the `erleat-prompt`,
-`erleat-input`, `erleat-output`, and `erleat-result` faces independently.
+```erlang
+io:format("Printed output.~n"), {ok, 42, "returned value"}.
+```
 
-## Scope and development
+Printed text uses `erlang-shell-highlight-output`. The returned term uses Erlang
+syntax highlighting, falling back to `erlang-shell-highlight-result` where no
+syntax face applies. Both fallback faces inherit `default` and can be customized.
 
-Highlighting is heuristic: the default prompt pattern recognizes local numbered
-prompts, and a result is assumed to be the final unindented line plus its indented
-continuations. Custom prompts, prompt-shaped application output, and unusual
-pretty printing may need adjustments. Customize `erleat-prompt-regexp` as needed.
+The distinction is heuristic: the final unindented line and its indented
+continuations are treated as the returned value. Prompt-shaped application output,
+unusual pretty printing, and asynchronous output during evaluation can confuse
+this heuristic.
 
-The integration has been tested on Linux with Emacs 30.1, Eat 0.9.4, and OTP 27.
+### Custom syntax highlighting
 
-For development only, after editing the package, use `M-x load-file` on
-[`erleat-load-all.el`](erleat-load-all.el) to reload all Erleat files.
+Results are fontified in a temporary `erlang-mode` buffer. For efficiency,
+`erlang-mode-hook` and `prog-mode-hook` are suppressed so that source-buffer
+services such as Flymake are not started for every result. Font lock itself is
+used normally.
 
-### Tests
+If you add custom keywords in your source-buffer hooks, put that setup in a
+function and reuse it here:
 
-Run the ERT suite from the checkout root:
+```elisp
+(defun my-erlang-font-lock-setup ()
+  (font-lock-add-keywords
+   nil '(("," . font-lock-keyword-face))))
+
+(add-hook 'erlang-mode-hook #'my-erlang-font-lock-setup)
+(setq erlang-shell-highlight-font-lock-add-keywords-function
+      #'my-erlang-font-lock-setup)
+```
+
+The function runs before fontification. Text-property faces are copied into
+shell overlays; overlays created by other highlighting packages are not copied.
+
+## Tests
 
 ```sh
-emacs -Q --batch -l test/run-tests.el
+emacs -Q --batch -L /path/to/erlang-mode -l test/run-comint-tests.el
 ```
 
-The runner initializes locally installed `package.el` packages. Erlang mode,
-Eat, and Eat's dependencies must be available on `load-path`. For manually
-installed dependencies, supply their directories with `-L` before loading the runner:
+The runner initializes installed `package.el` packages. The real-shell tests
+require a POSIX PTY environment and `rebar3` on `PATH`, or its executable path in
+`ERLANG_COMINT_REDRAW_REBAR3`; otherwise those tests are skipped. They use temporary
+directories and clean up their processes and buffers.
 
-```sh
-emacs -Q --batch \
-  -L /path/to/erlang-mode -L /path/to/eat -L /path/to/compat \
-  -l test/run-tests.el
-```
+Tests cover chunk boundaries, unknown output, timeout handling, mode lifecycle,
+syntax faces and custom font-lock rules, synchronous output during submission,
+and split prompts. Real-shell tests exercise the original command sender and
+compilation, `r3` availability, multiline input, and asynchronous output with
+unfinished input, with and without optional highlighting.
 
-The integration tests require a local Erlang runtime and a POSIX environment with
-PTY support, `sh`, and `stty`. Put `erl` on `PATH`, or set `ERLEAT_TEST_ERL` to its
-executable path. No OTP source build or network access is needed.
-
-Tests cover prompt navigation, redraws, input and result highlighting, custom
-font-lock rules, mode lifecycle, keymap precedence, source reloading, and the
-stale-RET-keymap regression. They use temporary directories and clean up their
-processes and buffers. Close any existing `*erlang-eat*` buffer before running
-integration tests interactively; the fixtures refuse to reuse it.
+Verified with Emacs 30.1, Erlang/OTP 27.3.4.1, and rebar3 3.24.0.
 
 ## License
 
-Erleat is licensed under the [GNU General Public License, version 3 or any later version](LICENSE)
-(GPL-3.0-or-later).
+These libraries are licensed under the [GNU General Public License, version 3
+or any later version](LICENSE) (GPL-3.0-or-later).
