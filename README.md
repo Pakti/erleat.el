@@ -136,6 +136,34 @@ bypassing stale `.elc` files, without reloading Erlang mode or Eat.
 Users should load `(require 'erleat)` instead; the reload helper does not belong
 in normal user initialization.
 
+### Tests
+
+Run the ERT suite from the checkout root:
+
+```sh
+emacs -Q --batch -l test/run-tests.el
+```
+
+The runner initializes locally installed `package.el` packages. Erlang mode,
+Eat, and Eat's dependencies must be available on `load-path`. For manually
+installed dependencies, supply their directories with `-L` before loading the runner:
+
+```sh
+emacs -Q --batch \
+  -L /path/to/erlang-mode -L /path/to/eat -L /path/to/compat \
+  -l test/run-tests.el
+```
+
+The integration tests require a local Erlang runtime and a POSIX environment with
+PTY support, `sh`, and `stty`. Put `erl` on `PATH`, or set `ERLEAT_TEST_ERL` to its
+executable path. No OTP source build or network access is needed.
+
+Tests cover prompt navigation, redraws, input and result highlighting, custom
+font-lock rules, mode lifecycle, keymap precedence, source reloading, and the
+stale-RET-keymap regression. They use temporary directories and clean up their
+processes and buffers. Close any existing `*erlang-eat*` buffer before running
+integration tests interactively; the fixtures refuse to reuse it.
+
 ## License
 
 Erleat is licensed under the [GNU General Public License, version 3](LICENSE)
