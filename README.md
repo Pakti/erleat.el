@@ -1,7 +1,9 @@
-# Erleat = Erlang + Eat
+# Erleat = Erlang Shell + Eat for Emacs
 
-An Erlang inferior shell for Emacs, using the [Eat](https://codeberg.org/akib/emacs-eat) terminal emulator
+Erleat is an inferior Erlang shell for Emacs, using the [Eat](https://codeberg.org/akib/emacs-eat) terminal emulator
 instead of Comint -- as is the case with the inferior shell that ships with [Erlang/OTP](https://github.com/erlang/otp) -- in order to avoid display problems experienced with Comint.
+
+## Motivation
 
 Unless started with the `-oldshell` option, the Erlang shell edits and redraws its prompts using terminal control sequences.
 With Comint, those redraws can leave duplicated or incorrectly displayed prompts.
@@ -9,12 +11,14 @@ Unfortunately, using the `-oldshell` option with `rebar3 shell` as the shell wil
 Eat emulates a terminal, allowing Erlang to handle line editing, history, and
 completion while Eat renders the screen.
 
+Erleat Mode is a minor mode instead of deriving from Eat Mode because Eat Mode runs some checks on the major mode in its buffers.
+
+## Additions
+
 Erleat reuses options from Erlang shell mode, and aims to mimic its behavior.
 
 Erleat also provides [optional highlighting of printed output and returned
 values](#output-and-result-highlighting).
-
-Erleat Mode is a minor mode instead of deriving from Eat Mode because Eat Mode runs some checks on the major mode in its buffers.
 
 ## Setup
 
@@ -48,79 +52,52 @@ To select a different executable or arguments, customize these options from Erla
 
 - Use Erlang's terminal editing, history recall, and Tab completion.
 - Navigate prompts with `M-x erleat-previous-shell-prompt` and
-  `M-x erleat-next-shell-prompt`, or add custom key bindings to `erleat-mode-map`. Both use `erleat-prompt-regexp` and accept a
-  numeric prefix to move across multiple prompts. Point lands at the end of the
-  prompt, immediately before the user input.
-- Paste with **`C-y`** or **`M-x eat-yank`**. If needed, use `C-c C-j` to select
-  Eat's semi-char input mode. Ordinary buffer-insertion commands such as
-  `clipboard-yank` can fail because the terminal text is read-only.
-- Use `erleat-mode-hook` to customize the terminal buffer. `erleat` enables
-  `erleat-mode` on initialization and restart, but does not re-enable an already
-  active mode when selecting an existing shell. Like other minor-mode hooks,
-  this hook also runs when explicitly enabling or disabling the mode.
-  The major mode remains `eat-mode`; `erleat-buffer-p` identifies Erleat buffers.
-- Customize `erleat-mode-map` for mode-specific bindings.
-  Its bindings take precedence over Eat's input-mode maps; unbound keys retain
-  their usual behavior. RET submits input through Eat and records its boundary
-  regardless of whether optional output/result highlighting is enabled.
-- Run `M-x erleat-version` to display the package version.
-
-For example, customize key bindings after loading Erleat:
-
-```elisp
+  `M-x erleat-next-shell-prompt`, or add custom key bindings to `erleat-mode-map`:
+  
+  ```elisp
 (with-eval-after-load 'erleat
   (define-key erleat-mode-map (kbd "C-v") #'eat-yank)
   (define-key erleat-mode-map (kbd "C-c C-p") #'erleat-previous-shell-prompt)
   (define-key erleat-mode-map (kbd "C-c C-n") #'erleat-next-shell-prompt))
 ```
+  
+  `erleat-previous-shell-prompt` and `erleat-next-shell-prompt` use `erleat-prompt-regexp` and accept a
+  numeric prefix to move across multiple prompts.
+- Ordinary buffer-insertion commands such as
+  `clipboard-yank` can fail because the terminal text is read-only.
+  Paste with **`C-y`** or **`M-x eat-yank`**. If needed, use `C-c C-j` to select
+  Eat's semi-char input mode.
+- Use `erleat-mode-hook` to customize the Erleat buffer. `erleat` enables
+  `erleat-mode` on initialization and restart, but does not re-enable an already
+  active mode when selecting an existing shell. Like other minor-mode hooks,
+  this hook also runs when explicitly enabling or disabling the mode.
+  The major mode remains `eat-mode`; `erleat-buffer-p` identifies Erleat buffers.
+- `erleat-mode-map` bindings take precedence over Eat's input-mode maps; unbound keys retain
+  their usual behavior. RET submits input through Eat and records its boundary
+  regardless of whether optional output/result highlighting is enabled.
+- Run `M-x erleat-version` to display the package version.
+
 
 ### Output and result highlighting
 
-The boolean option `erleat-extra-highlight` defaults to `nil`. To enable both
-output and result highlighting automatically, add this to your Emacs initialization:
+The boolean option `erleat-extra-highlight` controls the highlighting of both
+expressions' output and result by enabling the `erleat-highlight-mode` minor mode along with `erleat-mode`.
 
-```elisp
-(setq erleat-extra-highlight t)
-```
-
-The option takes effect when `erleat-mode` is enabled; changing it does not update
-existing shells immediately. For the current shell, toggle
-`M-x erleat-highlight-mode`. Disabling `erleat-mode` also disables the highlighting
-mode. No highlighting setup in `erleat-mode-hook` is needed.
-
-The highlighting mode observes the submissions
-recorded by `erleat-mode`, distinguishes printed output from the returned value,
-and fontifies that value with Erlang mode. It does not bind keys or send input.
-For example:
-
-```erlang
-io:format("This is printed output.~n"), {ok, 42, "returned value"}.
-```
-
-If your source buffers use a custom `font-lock-add-keywords` setup function,
-assign that same no-argument function to `erleat-font-lock-add-keywords-function`:
+If you've customized Erlang font-locking with `font-lock-add-keywords` and would like the customization to apply
+to results in Erleat buffers, then you must extract the customization into a function to be set as the value of
+`erleat-font-lock-add-keywords-function`:
 
 ```elisp
 (setq erleat-font-lock-add-keywords-function #'my-erlang-font-lock-setup)
 ```
 
-For efficiency, the renderer activates Erlang mode in a temporary buffer but
-suppresses `erlang-mode-hook` and `prog-mode-hook`. This avoids repeatedly starting
-source-buffer services such as Flymake for each result. Fontification is still
-performed with `font-lock-ensure`; suppressing those hooks does not disable it.
 
-Customize `erleat-font-lock-add-keywords-function` to install any additional
-font-lock rules you want for results. The optional no-argument function runs in
-the temporary buffer after activating Erlang mode and before fontification; its
-default is `nil`. Only text-property faces are copied back to the terminal, not
-overlay-based highlighting. Customize the `erleat-prompt`,
+## Faces
+
+Customize the `erleat-prompt`,
 `erleat-input`, `erleat-output`, and `erleat-result` faces independently.
 
 ## Scope and development
-
-The existing Erlang compile and EUnit commands still use their original Comint
-backend. Erleat currently provides an alternative terminal, not a replacement for
-those commands.
 
 Highlighting is heuristic: the default prompt pattern recognizes local numbered
 prompts, and a result is assumed to be the final unindented line plus its indented
@@ -130,11 +107,7 @@ pretty printing may need adjustments. Customize `erleat-prompt-regexp` as needed
 The integration has been tested on Linux with Emacs 30.1, Eat 0.9.4, and OTP 27.
 
 For development only, after editing the package, use `M-x load-file` on
-[`erleat-load-all.el`](erleat-load-all.el). It reloads
-[`erleat-highlight.el`](erleat-highlight.el) and [`erleat.el`](erleat.el) from source,
-bypassing stale `.elc` files, without reloading Erlang mode or Eat.
-Users should load `(require 'erleat)` instead; the reload helper does not belong
-in normal user initialization.
+[`erleat-load-all.el`](erleat-load-all.el) to reload all Erleat files.
 
 ### Tests
 
