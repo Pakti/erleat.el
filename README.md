@@ -65,18 +65,30 @@ To select a different executable or arguments, customize these options from Erla
   regardless of whether optional output/result highlighting is enabled.
 - Run `M-x erleat-version` to display the package version.
 
-### Output and result highlighting
-
-Output/result highlighting is disabled by default. To enable it for Erleat
-shells, add this to your Emacs initialization:
+For example, customize key bindings after loading Erleat:
 
 ```elisp
-(add-hook 'erleat-mode-hook
-          (lambda ()
-            (erleat-highlight-mode (if erleat-mode 1 -1))))
+(with-eval-after-load 'erleat
+  (define-key erleat-mode-map (kbd "C-v") #'eat-yank)
+  (define-key erleat-mode-map (kbd "C-c C-p") #'erleat-previous-shell-prompt)
+  (define-key erleat-mode-map (kbd "C-c C-n") #'erleat-next-shell-prompt))
 ```
 
-For an existing shell, run `M-x erleat-highlight-mode`. It observes the submissions
+### Output and result highlighting
+
+The boolean option `erleat-extra-highlight` defaults to `nil`. To enable both
+output and result highlighting automatically, add this to your Emacs initialization:
+
+```elisp
+(setq erleat-extra-highlight t)
+```
+
+The option takes effect when `erleat-mode` is enabled; changing it does not update
+existing shells immediately. For the current shell, toggle
+`M-x erleat-highlight-mode`. Disabling `erleat-mode` also disables the highlighting
+mode. No highlighting setup in `erleat-mode-hook` is needed.
+
+The highlighting mode observes the submissions
 recorded by `erleat-mode`, distinguishes printed output from the returned value,
 and fontifies that value with Erlang mode. It does not bind keys or send input.
 For example:

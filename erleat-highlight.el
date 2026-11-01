@@ -4,9 +4,8 @@
 
 ;;; Commentary:
 
-;; Enable through `erleat-mode-hook', following the core mode's state:
-;; (add-hook 'erleat-mode-hook
-;;           (lambda () (erleat-highlight-mode (if erleat-mode 1 -1))))
+;; Set `erleat-extra-highlight' to t to enable this mode automatically
+;; with `erleat-mode', or toggle `erleat-highlight-mode' in an active shell.
 ;; With `erleat-mode' active, RET delegates to Eat's original command and
 ;; tracks the subsequent rendered output until the next numbered prompt.
 ;; The last unindented line with its indented continuations is treated as

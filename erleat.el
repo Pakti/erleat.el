@@ -19,8 +19,7 @@
 ;; Prompts and submitted input are highlighted automatically.
 ;; To enable optional output and result highlighting:
 ;;
-;;   (add-hook 'erleat-mode-hook
-;;             (lambda () (erleat-highlight-mode (if erleat-mode 1 -1))))
+;;   (setq erleat-extra-highlight t)
 ;;
 ;; Prompt and submitted-input faces inherit the corresponding Comint faces.
 ;; Highlighting uses overlays after Eat renders output, without modifying
@@ -238,6 +237,16 @@ Unbound keys retain their normal Eat or Emacs bindings.")
 
 (defvar-local erleat--emulation-map-alist nil)
 
+(defcustom erleat-extra-highlight nil
+  "Whether enabling `erleat-mode' also enables output/result highlighting.
+Nil leaves only prompt and submitted-input highlighting enabled by default.
+This option takes effect when `erleat-mode' is enabled; changing it does
+not immediately update existing shells.  Toggle `erleat-highlight-mode'
+manually to change the current shell.  Disabling `erleat-mode' always
+disables `erleat-highlight-mode', regardless of this option."
+  :type 'boolean
+  :group 'erleat)
+
 (defun erleat--cleanup ()
   "Remove core prompt/input overlays and detach submission markers."
   (erleat--clear-highlights)
@@ -246,7 +255,8 @@ Unbound keys retain their normal Eat or Emacs bindings.")
 (define-minor-mode erleat-mode
   "Customize an Eat buffer for the Erlang shell.
 Provide `erleat-mode-map' and highlight prompts and submitted input.
-Output and result highlighting remain optional via `erleat-highlight-mode'."
+Use `erleat-extra-highlight' to enable optional output/result highlighting
+on startup.  Disabling this mode also disables `erleat-highlight-mode'."
   :lighter nil
   :keymap erleat-mode-map
   (if erleat-mode
@@ -267,7 +277,9 @@ Output and result highlighting remain optional via `erleat-highlight-mode'."
         (add-hook 'eat-exit-hook #'erleat--forget-input nil t)
         (add-hook 'change-major-mode-hook #'erleat--cleanup nil t)
         (add-hook 'kill-buffer-hook #'erleat--cleanup nil t)
-        (erleat--highlight))
+        (erleat--highlight)
+        (erleat-highlight-mode (if erleat-extra-highlight 1 -1)))
+    (erleat-highlight-mode -1)
     (setq-local emulation-mode-map-alists
                 (remq 'erleat--emulation-map-alist emulation-mode-map-alists))
     (remove-hook 'eat-update-hook #'erleat--highlight t)
